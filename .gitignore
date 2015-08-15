@@ -1,0 +1,15 @@
+.Trashes
+Thumbs.db
+.DS_Store
+.gradle/
+.idea/
+*.iml
+*.ipr
+*.iws
+classes/
+eclipse/
+gradle/
+gradlew
+logs/
+out/
+
