@@ -15,6 +15,12 @@ import net.minecraft.world.World;
  */
 public class ItemCatalyst extends Item {
 
+    // TODO: make configurable?
+    private final int maxUse = 72000;
+    private final int maxScalar = 50;
+    private final double maxDistance = 25.0D;
+    private int lastInUseDuration = 0;
+
     public ItemCatalyst() {
         this.setMaxStackSize(1);
         this.setCreativeTab(CreativeTabs.tabMisc);
@@ -24,17 +30,16 @@ public class ItemCatalyst extends Item {
     public void onUpdate(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         if (entityIn instanceof EntityPlayer && worldIn.isRemote) {
             EntityPlayer player = ((EntityPlayer) entityIn);
-            ItemStack inUse = player.getItemInUse();
-            if (inUse != null && inUse.getItem().equals(this)) {
-                MovingObjectPosition mop = getLocationLookingAt(worldIn, player, 10.0D);
+            ItemStack stackInUse = player.getItemInUse();
+            if (stackInUse != null && stackInUse.getItem().equals(this)) {
+                lastInUseDuration = player.getItemInUseDuration();
+                MovingObjectPosition mop = getLocationLookingAt(worldIn, player,
+                        getScaledDistance(lastInUseDuration));
                 if (mop != null) {
                     BlockPos pos = mop.getBlockPos();
                     double x = 0;
                     double y = 1.5D;
                     double z = 0;
-                    double xo = 0;
-                    double yo = -2.0D;
-                    double zo = 0;
                     switch (mop.sideHit) {
                         case SOUTH:
                             z += 1.0D;
@@ -57,16 +62,34 @@ public class ItemCatalyst extends Item {
                             z += itemRand.nextDouble();
                             break;
                     }
-                    worldIn.spawnParticle(EnumParticleTypes.PORTAL, pos.getX() + x, (double) pos.getY() + y, pos.getZ() + z, xo, yo, zo);
+                    worldIn.spawnParticle(EnumParticleTypes.PORTAL, pos.getX() + x, (double) pos.getY() + y,
+                            pos.getZ() + z, 0.0D, -2.0D, 0.0D);
                 }
             }
         }
         super.onUpdate(stack, worldIn, entityIn, itemSlot, isSelected);
     }
 
+    /**
+     * Get the scaled distance from how long the player has been using the item.
+     * Uses a separate "max" duration. getMaxDuration() is how long user can use the item,
+     * we'll leave this high so they can hold it for a long time. But we want to quickly
+     * scale up to the max distance, so we have a cap on that scalar.
+     *
+     * @param itemInUseDuration how long the player has been using the item (non normalized)
+     * @return scaled distance
+     */
+    private double getScaledDistance(double itemInUseDuration) {
+        // normalize the time in use
+        double durationInUse = Math.min(maxScalar, itemInUseDuration);
+        return ((durationInUse / maxScalar) * maxDistance);
+    }
+
     @Override
     public void onPlayerStoppedUsing(ItemStack stack, World worldIn, EntityPlayer playerIn, int timeLeft) {
-        MovingObjectPosition pos = getLocationLookingAt(worldIn, playerIn, 10.0D);
+        double scaled = getScaledDistance(lastInUseDuration);
+        MovingObjectPosition pos = getLocationLookingAt(worldIn, playerIn,
+                scaled);
         if (pos != null && pos.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
             // find first open space
             BlockPos hit = pos.getBlockPos();
@@ -90,6 +113,8 @@ public class ItemCatalyst extends Item {
                         playerIn.addPotionEffect(new PotionEffect(Potion.absorption.id, 10, 4, false, false));
                     }
                     // move player, play sound, spawn particles
+                    worldIn.playSoundEffect(playerIn.posX, playerIn.posY + 0.5, playerIn.posZ, "mob.endermen.portal",
+                            1.0F, 1.0F);
                     playerIn.setPositionAndUpdate(x + 0.5, y, z + 0.5);
                     worldIn.playSoundEffect(x, y + 0.5, z, "mob.endermen.portal", 1.0F, 1.0F);
                     for (int j = 0; j < 30; j++) {
@@ -117,7 +142,7 @@ public class ItemCatalyst extends Item {
 
     @Override
     public int getMaxItemUseDuration(ItemStack stack) {
-        return 72000;
+        return maxUse;
     }
 
     @Override
