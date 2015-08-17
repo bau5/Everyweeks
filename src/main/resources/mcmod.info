@@ -1,0 +1,16 @@
+[
+{
+  "modid": "shadowstep",
+  "name": "Shadowstep",
+  "description": "Part of the Everyweeks series.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["bau5"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
