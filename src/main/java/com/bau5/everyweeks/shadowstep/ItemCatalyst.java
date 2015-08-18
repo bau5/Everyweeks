@@ -4,6 +4,7 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.*;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.*;
@@ -22,6 +23,8 @@ public class ItemCatalyst extends Item {
     private int lastInUseDuration = 0;
     private double damageScalar = 5.0D;
 
+    private int repairCounter = 0;
+
     public ItemCatalyst() {
         this.setMaxStackSize(1);
         this.setCreativeTab(CreativeTabs.tabMisc);
@@ -33,6 +36,13 @@ public class ItemCatalyst extends Item {
         if (entityIn instanceof EntityPlayer && worldIn.isRemote) {
             EntityPlayer player = ((EntityPlayer) entityIn);
             ItemStack stackInUse = player.getItemInUse();
+            if (stack.isItemDamaged()) {
+                repairCounter++;
+                if (repairCounter > 225) {
+                    stack.damageItem(-1, player);
+                    repairCounter = 0;
+                }
+            }
             if (stackInUse != null && stackInUse.getItem().equals(this)) {
                 lastInUseDuration = player.getItemInUseDuration();
                 MovingObjectPosition mop = getLocationLookingAt(worldIn, player,
@@ -100,7 +110,7 @@ public class ItemCatalyst extends Item {
                 if (!isValid(search, worldIn)) {
                     search = search.add(0, 1, 0);
                 } else {
-                    int damage = (int)Math.ceil((scaled / maxDistance) * damageScalar);
+                    int damage = (int) Math.ceil((scaled / maxDistance) * damageScalar);
                     if (stack.getItemDamage() + damage < getMaxDamage()) {
                         BlockPos playerPos = playerIn.getPosition();
                         // spawn particles before stepping
@@ -125,6 +135,7 @@ public class ItemCatalyst extends Item {
                             worldIn.spawnParticle(EnumParticleTypes.PORTAL, x + 0.5D, y, z + 0.5D,
                                     itemRand.nextDouble() - 0.5D, itemRand.nextDouble(), itemRand.nextDouble() - 0.5D);
                         }
+                        // damage item based on how far it was used to step
                         stack.damageItem(damage, playerIn);
                     } else {
                         if (worldIn.isRemote) {
@@ -135,7 +146,7 @@ public class ItemCatalyst extends Item {
                 }
             }
         }
-
+        stack.damageItem(98, playerIn);
         super.onPlayerStoppedUsing(stack, worldIn, playerIn, timeLeft);
     }
 
