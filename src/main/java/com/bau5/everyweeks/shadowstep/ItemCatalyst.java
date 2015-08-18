@@ -20,10 +20,12 @@ public class ItemCatalyst extends Item {
     private final int maxScalar = 50;
     private final double maxDistance = 25.0D;
     private int lastInUseDuration = 0;
+    private double damageScalar = 5.0D;
 
     public ItemCatalyst() {
         this.setMaxStackSize(1);
         this.setCreativeTab(CreativeTabs.tabMisc);
+        this.setMaxDamage(100);
     }
 
     @Override
@@ -80,8 +82,8 @@ public class ItemCatalyst extends Item {
      * @return scaled distance
      */
     private double getScaledDistance(double itemInUseDuration) {
-        // normalize the time in use
-        double durationInUse = Math.min(maxScalar, itemInUseDuration);
+        // normalize the time in use, and bring it up to a minimum just in case
+        double durationInUse = Math.min(maxScalar, Math.max(itemInUseDuration, 10));
         return ((durationInUse / maxScalar) * maxDistance);
     }
 
@@ -98,28 +100,36 @@ public class ItemCatalyst extends Item {
                 if (!isValid(search, worldIn)) {
                     search = search.add(0, 1, 0);
                 } else {
-                    BlockPos playerPos = playerIn.getPosition();
-                    // spawn particles before stepping
-                    for (int j = 0; j < 30; j++) {
-                        worldIn.spawnParticle(EnumParticleTypes.PORTAL, playerPos.getX() + itemRand.nextDouble(),
-                                playerPos.getY() + itemRand.nextDouble() * 2, playerPos.getZ() + itemRand.nextDouble(),
-                                itemRand.nextDouble() - 0.5D, 0.0D, itemRand.nextDouble() - 0.5D);
-                    }
-                    double x = search.getX();
-                    double y = search.getY();
-                    double z = search.getZ();
-                    // add resistance if falling, will negate some damage
-                    if (playerIn.motionY < -0.5D) {
-                        playerIn.addPotionEffect(new PotionEffect(Potion.absorption.id, 10, 4, false, false));
-                    }
-                    // move player, play sound, spawn particles
-                    worldIn.playSoundEffect(playerIn.posX, playerIn.posY + 0.5, playerIn.posZ, "mob.endermen.portal",
-                            1.0F, 1.0F);
-                    playerIn.setPositionAndUpdate(x + 0.5, y, z + 0.5);
-                    worldIn.playSoundEffect(x, y + 0.5, z, "mob.endermen.portal", 1.0F, 1.0F);
-                    for (int j = 0; j < 30; j++) {
-                        worldIn.spawnParticle(EnumParticleTypes.PORTAL, x + 0.5D, y, z + 0.5D,
-                                itemRand.nextDouble() - 0.5D, itemRand.nextDouble(), itemRand.nextDouble() - 0.5D);
+                    int damage = (int)Math.ceil((scaled / maxDistance) * damageScalar);
+                    if (stack.getItemDamage() + damage < getMaxDamage()) {
+                        BlockPos playerPos = playerIn.getPosition();
+                        // spawn particles before stepping
+                        for (int j = 0; j < 30; j++) {
+                            worldIn.spawnParticle(EnumParticleTypes.PORTAL, playerPos.getX() + itemRand.nextDouble(),
+                                    playerPos.getY() + itemRand.nextDouble() * 2, playerPos.getZ() + itemRand.nextDouble(),
+                                    itemRand.nextDouble() - 0.5D, 0.0D, itemRand.nextDouble() - 0.5D);
+                        }
+                        double x = search.getX();
+                        double y = search.getY();
+                        double z = search.getZ();
+                        // add resistance if falling, will negate some damage
+                        if (playerIn.motionY < -0.5D) {
+                            playerIn.addPotionEffect(new PotionEffect(Potion.absorption.id, 10, 4, false, false));
+                        }
+                        // move player, play sound, spawn particles
+                        worldIn.playSoundEffect(playerIn.posX, playerIn.posY + 0.5, playerIn.posZ, "mob.endermen.portal",
+                                1.0F, 1.0F);
+                        playerIn.setPositionAndUpdate(x + 0.5, y, z + 0.5);
+                        worldIn.playSoundEffect(x, y + 0.5, z, "mob.endermen.portal", 1.0F, 1.0F);
+                        for (int j = 0; j < 30; j++) {
+                            worldIn.spawnParticle(EnumParticleTypes.PORTAL, x + 0.5D, y, z + 0.5D,
+                                    itemRand.nextDouble() - 0.5D, itemRand.nextDouble(), itemRand.nextDouble() - 0.5D);
+                        }
+                        stack.damageItem(damage, playerIn);
+                    } else {
+                        if (worldIn.isRemote) {
+                            playerIn.playSound("mob.endermen.portal", 1.0F, 0.1F);
+                        }
                     }
                     break;
                 }
