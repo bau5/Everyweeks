@@ -4,7 +4,6 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.*;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.*;
@@ -17,15 +16,15 @@ import net.minecraft.world.World;
 public class ItemCatalyst extends Item {
 
     // TODO: make configurable?
-    private final int maxUse = 72000;
     private final int maxScalar = 50;
     private final double maxDistance = 25.0D;
-    private int lastInUseDuration = 0;
-    private double damageScalar = 5.0D;
+    private final double damageScalar = 5.0D;
 
+    private int lastInUseDuration = 0;
     private int repairCounter = 0;
 
     public ItemCatalyst() {
+        this.setUnlocalizedName(ShadowStep.MODID + "_catalyst");
         this.setMaxStackSize(1);
         this.setCreativeTab(CreativeTabs.tabMisc);
         this.setMaxDamage(100);
@@ -33,9 +32,9 @@ public class ItemCatalyst extends Item {
 
     @Override
     public void onUpdate(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-        if (entityIn instanceof EntityPlayer && worldIn.isRemote) {
+        if (isSelected && worldIn.isRemote && entityIn instanceof EntityPlayer) {
             EntityPlayer player = ((EntityPlayer) entityIn);
-            ItemStack stackInUse = player.getItemInUse();
+
             if (stack.isItemDamaged()) {
                 repairCounter++;
                 if (repairCounter > 225) {
@@ -43,8 +42,19 @@ public class ItemCatalyst extends Item {
                     repairCounter = 0;
                 }
             }
-            if (stackInUse != null && stackInUse.getItem().equals(this)) {
+
+            ItemStack stackInUse = player.getItemInUse();
+            if (stackInUse != null) {
                 lastInUseDuration = player.getItemInUseDuration();
+
+                // is fully charged
+                if (lastInUseDuration > maxScalar && itemRand.nextDouble() > 0.85D) {
+                    double x = Math.cos(entityIn.rotationYaw * 0.017453292F - (float)Math.PI);
+                    double z = Math.sin(entityIn.rotationYaw * 0.017453292F - (float)Math.PI);
+                    worldIn.spawnParticle(EnumParticleTypes.PORTAL, entityIn.posX + x, entityIn.posY + 1.0,
+                            entityIn.posZ + z, 0.0D, -1.0D, 0.0D);
+                }
+
                 MovingObjectPosition mop = getLocationLookingAt(worldIn, player,
                         getScaledDistance(lastInUseDuration));
                 if (mop != null) {
@@ -119,6 +129,7 @@ public class ItemCatalyst extends Item {
                                     playerPos.getY() + itemRand.nextDouble() * 2, playerPos.getZ() + itemRand.nextDouble(),
                                     itemRand.nextDouble() - 0.5D, 0.0D, itemRand.nextDouble() - 0.5D);
                         }
+
                         double x = search.getX();
                         double y = search.getY();
                         double z = search.getZ();
@@ -130,6 +141,7 @@ public class ItemCatalyst extends Item {
                         worldIn.playSoundEffect(playerIn.posX, playerIn.posY + 0.5, playerIn.posZ, "mob.endermen.portal",
                                 1.0F, 1.0F);
                         playerIn.setPositionAndUpdate(x + 0.5, y, z + 0.5);
+
                         worldIn.playSoundEffect(x, y + 0.5, z, "mob.endermen.portal", 1.0F, 1.0F);
                         for (int j = 0; j < 30; j++) {
                             worldIn.spawnParticle(EnumParticleTypes.PORTAL, x + 0.5D, y, z + 0.5D,
@@ -146,7 +158,6 @@ public class ItemCatalyst extends Item {
                 }
             }
         }
-        stack.damageItem(98, playerIn);
         super.onPlayerStoppedUsing(stack, worldIn, playerIn, timeLeft);
     }
 
@@ -156,14 +167,14 @@ public class ItemCatalyst extends Item {
 
     public MovingObjectPosition getLocationLookingAt(World world, EntityPlayer player, double distance) {
         Vec3 eyes = player.getPositionEyes(1.0F);
-        Vec3 look = player.getLook(1.0F);
+        Vec3 look = player.getLookVec();
         Vec3 end = eyes.addVector(look.xCoord * distance, look.yCoord * distance, look.zCoord * distance);
         return world.rayTraceBlocks(eyes, end, true, true, false);
     }
 
     @Override
     public int getMaxItemUseDuration(ItemStack stack) {
-        return maxUse;
+        return 72000;
     }
 
     @Override
