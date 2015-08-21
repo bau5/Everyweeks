@@ -15,13 +15,13 @@ import net.minecraft.world.World;
  */
 public class ItemCatalyst extends Item {
 
-    // TODO: make configurable?
-    private final int maxScalar = 50;
-    private final double maxDistance = 25.0D;
     private final double damageScalar = 5.0D;
+    private final double maxDistance = 25.0D;
+    private final int maxScalar = 50;
 
     private int lastInUseDuration = 0;
     private int repairCounter = 0;
+    private BlockPos lastBlockPos = null;
 
     public ItemCatalyst() {
         this.setUnlocalizedName(ShadowStep.MODID + "_catalyst");
@@ -32,33 +32,22 @@ public class ItemCatalyst extends Item {
 
     @Override
     public void onUpdate(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-        if (isSelected && worldIn.isRemote && entityIn instanceof EntityPlayer) {
+        if (entityIn instanceof EntityPlayer) {
             EntityPlayer player = ((EntityPlayer) entityIn);
 
-            if (stack.isItemDamaged()) {
-                repairCounter++;
-                if (repairCounter > 225) {
-                    stack.damageItem(-1, player);
-                    repairCounter = 0;
-                }
-            }
-
             ItemStack stackInUse = player.getItemInUse();
-            if (stackInUse != null) {
+            if (stackInUse != null && stackInUse.getItem().equals(this)) {
                 lastInUseDuration = player.getItemInUseDuration();
-
-                // is fully charged
-                if (lastInUseDuration > maxScalar && itemRand.nextDouble() > 0.85D) {
-                    double x = Math.cos(entityIn.rotationYaw * 0.017453292F - (float)Math.PI);
-                    double z = Math.sin(entityIn.rotationYaw * 0.017453292F - (float)Math.PI);
-                    worldIn.spawnParticle(EnumParticleTypes.PORTAL, entityIn.posX + x, entityIn.posY + 1.0,
-                            entityIn.posZ + z, 0.0D, -1.0D, 0.0D);
-                }
 
                 MovingObjectPosition mop = getLocationLookingAt(worldIn, player,
                         getScaledDistance(lastInUseDuration));
                 if (mop != null) {
                     BlockPos pos = mop.getBlockPos();
+                    if (lastBlockPos == null || lastBlockPos.compareTo(pos) != 0) {
+                        player.playSound("mob.endermen.portal", 1.0F, 0.5F);
+                    }
+
+                    lastBlockPos = pos;
                     double x = 0;
                     double y = 1.5D;
                     double z = 0;
@@ -87,24 +76,18 @@ public class ItemCatalyst extends Item {
                     worldIn.spawnParticle(EnumParticleTypes.PORTAL, pos.getX() + x, (double) pos.getY() + y,
                             pos.getZ() + z, 0.0D, -2.0D, 0.0D);
                 }
+            } else {
+                boolean isNight = worldIn.getWorldTime() > 135000 && worldIn.getWorldTime() < 24000;
+                if (stack.isItemDamaged() && isNight) {
+                    repairCounter++;
+                    if (repairCounter > 225) {
+                        stack.damageItem(-1, player);
+                        repairCounter = 0;
+                    }
+                }
             }
         }
         super.onUpdate(stack, worldIn, entityIn, itemSlot, isSelected);
-    }
-
-    /**
-     * Get the scaled distance from how long the player has been using the item.
-     * Uses a separate "max" duration. getMaxDuration() is how long user can use the item,
-     * we'll leave this high so they can hold it for a long time. But we want to quickly
-     * scale up to the max distance, so we have a cap on that scalar.
-     *
-     * @param itemInUseDuration how long the player has been using the item (non normalized)
-     * @return scaled distance
-     */
-    private double getScaledDistance(double itemInUseDuration) {
-        // normalize the time in use, and bring it up to a minimum just in case
-        double durationInUse = Math.min(maxScalar, Math.max(itemInUseDuration, 10));
-        return ((durationInUse / maxScalar) * maxDistance);
     }
 
     @Override
@@ -115,10 +98,10 @@ public class ItemCatalyst extends Item {
         if (pos != null && pos.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
             // find first open space
             BlockPos hit = pos.getBlockPos();
-            BlockPos search = hit.add(0, 1, 0);
+            BlockPos search = hit.up();
             for (int i = 0; i < 5; i++) {
                 if (!isValid(search, worldIn)) {
-                    search = search.add(0, 1, 0);
+                    search = search.up();
                 } else {
                     int damage = (int) Math.ceil((scaled / maxDistance) * damageScalar);
                     if (stack.getItemDamage() + damage < getMaxDamage()) {
@@ -149,10 +132,6 @@ public class ItemCatalyst extends Item {
                         }
                         // damage item based on how far it was used to step
                         stack.damageItem(damage, playerIn);
-                    } else {
-                        if (worldIn.isRemote) {
-                            playerIn.playSound("mob.endermen.portal", 1.0F, 0.1F);
-                        }
                     }
                     break;
                 }
@@ -172,9 +151,19 @@ public class ItemCatalyst extends Item {
         return world.rayTraceBlocks(eyes, end, true, true, false);
     }
 
-    @Override
-    public int getMaxItemUseDuration(ItemStack stack) {
-        return 72000;
+    /**
+     * Get the scaled distance from how long the player has been using the item.
+     * Uses a separate "max" duration. getMaxDuration() is how long user can use the item,
+     * we'll leave this high so they can hold it for a long time. But we want to quickly
+     * scale up to the max distance, so we have a cap on that scalar.
+     *
+     * @param itemInUseDuration how long the player has been using the item (non normalized)
+     * @return scaled distance
+     */
+    private double getScaledDistance(double itemInUseDuration) {
+        // normalize the time in use, and bring it up to a minimum just in case
+        double durationInUse = Math.min(maxScalar, Math.max(itemInUseDuration, 10));
+        return ((durationInUse / maxScalar) * maxDistance);
     }
 
     @Override
@@ -184,7 +173,17 @@ public class ItemCatalyst extends Item {
     }
 
     @Override
+    public int getMaxItemUseDuration(ItemStack stack) {
+        return 72000;
+    }
+
+    @Override
     public EnumAction getItemUseAction(ItemStack stack) {
         return EnumAction.BOW;
+    }
+
+    @Override
+    public boolean hasEffect(ItemStack stack) {
+        return true;
     }
 }
