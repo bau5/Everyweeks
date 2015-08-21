@@ -172,7 +172,7 @@ public class ItemCatalyst extends Item {
         float f5 = MathHelper.sin(-f * 0.017453292F);
         float f6 = f3 * f4;
         float f7 = f2 * f4;
-        double d3 = getScaledDistance(duration);
+        double d3 = getScaledDistance(duration);    //Instead of the hardcoded 5.0, we need the scaled distance
         Vec3 vec31 = vec3.addVector((double)f6 * d3, (double)f5 * d3, (double)f7 * d3);
         return worldIn.rayTraceBlocks(vec3, vec31, useLiquids, !useLiquids, false);
     }
