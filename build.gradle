@@ -19,8 +19,8 @@ apply plugin: 'scala'
 apply plugin: 'forge'
 
 version = "1.0"
-group= "com.bau5.everyweeks.shadowstep" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "Shadowstep"
+group= "com.bau5.everyweeks.accumulator" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "Accumulator"
 
 minecraft {
     version = "1.8-11.14.3.1450"

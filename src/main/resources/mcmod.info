@@ -1,7 +1,7 @@
 [
 {
-  "modid": "shadowstep",
-  "name": "Shadowstep",
+  "modid": "accumulator",
+  "name": "accumulator",
   "description": "Part of the Everyweeks series.",
   "version": "${version}",
   "mcversion": "${mcversion}",
