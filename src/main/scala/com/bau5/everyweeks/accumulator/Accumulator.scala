@@ -1,10 +1,10 @@
 package com.bau5.everyweeks.accumulator
 
-import net.minecraftforge.fml.common.network.NetworkRegistry
-import net.minecraftforge.fml.common.{SidedProxy, Mod}
 import net.minecraftforge.fml.common.Mod.EventHandler
-import net.minecraftforge.fml.common.event.{FMLPostInitializationEvent, FMLInitializationEvent}
+import net.minecraftforge.fml.common.event.{FMLInitializationEvent, FMLPostInitializationEvent}
+import net.minecraftforge.fml.common.network.NetworkRegistry
 import net.minecraftforge.fml.common.registry.GameRegistry
+import net.minecraftforge.fml.common.{Mod, SidedProxy}
 
 @Mod(modid = Accumulator.MOD_ID, name = Accumulator.NAME,
   version = Accumulator.VERSION, modLanguage = "scala")

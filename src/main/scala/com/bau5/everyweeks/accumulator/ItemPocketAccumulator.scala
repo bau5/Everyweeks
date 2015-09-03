@@ -1,5 +1,6 @@
 package com.bau5.everyweeks.accumulator
 
+import com.bau5.everyweeks.accumulator.container.ContainerAccumulator
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.Entity
 import net.minecraft.entity.player.EntityPlayer
@@ -15,6 +16,14 @@ class ItemPocketAccumulator() extends Item {
   this.setCreativeTab(CreativeTabs.tabMisc)
 
   override def onUpdate(stack: ItemStack, worldIn: World, entityIn: Entity, itemSlot: Int, isSelected: Boolean) {
+    entityIn match {
+      case player: EntityPlayer =>
+        player.openContainer match {
+          case acc: ContainerAccumulator => acc.onItemStackUpdate()
+          case _ => ;
+        }
+      case _ => ;
+    }
     super.onUpdate(stack, worldIn, entityIn, itemSlot, isSelected)
   }
 

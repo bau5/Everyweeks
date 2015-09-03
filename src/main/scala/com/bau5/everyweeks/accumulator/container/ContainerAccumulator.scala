@@ -15,6 +15,8 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
   val crafting = new InventoryCrafting(this, 3, 3)
   val craftResult = new InventoryCraftResult
 
+  var needsUpdate = true
+
   forSlots(3, 9, 9, 8, 84, 9) { (index, x, y) =>
     new Slot(player.inventory, index, x, y)
   }
@@ -30,7 +32,7 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
     new Slot(crafting, index, x, y)
   }
 
-  this.addSlotToContainer(new SlotCrafting(player, crafting, craftResult, 0, 130, 35))
+  this.addSlotToContainer(new SlotCrafting(player, crafting, craftResult, 0, 124, 35))
 
   override def slotClick(slotId: Int, clickedButton: Int, mode: Int, playerIn: EntityPlayer): ItemStack = {
     if (slotId < inventorySlots.size() && slotId >= 0) {
@@ -38,20 +40,13 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
         case Some(s) if s.getItem.equals(Accumulator.pocketAccumulator) => return null
         case _ => ;
       }
+
+      if (slotId == 45) {
+        onCraftMatrixChanged(crafting)
+      }
     }
 
     val stack = super.slotClick(slotId, clickedButton, mode, playerIn)
-    if (slotId >= 36 && slotId <= 44) {
-      craftResult.setInventorySlotContents(0, CraftingManager.getInstance().findMatchingRecipe(crafting, playerIn.worldObj))
-    }
-
-    val tag = new NBTTagCompound
-    for (idx <- 0 until crafting.getSizeInventory) {
-      Option(crafting.getStackInSlot(idx)).foreach {
-        s => tag.setTag(s"$idx", s.writeToNBT(new NBTTagCompound))
-      }
-    }
-    player.getHeldItem.setTagCompound(tag)
     stack
   }
 
@@ -64,6 +59,25 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
         this.addSlotToContainer(func(index, x, y))
       }
     }
+  }
+
+  def onItemStackUpdate() {
+    if (needsUpdate) {
+      craftResult.setInventorySlotContents(0, CraftingManager.getInstance().findMatchingRecipe(crafting, player.worldObj))
+
+      val tag = new NBTTagCompound
+      for (idx <- 0 until crafting.getSizeInventory) {
+        Option(crafting.getStackInSlot(idx)).foreach {
+          s => tag.setTag(s"$idx", s.writeToNBT(new NBTTagCompound))
+        }
+      }
+      player.getHeldItem.setTagCompound(tag)
+      needsUpdate = false
+    }
+  }
+
+  override def onCraftMatrixChanged(inventoryIn: IInventory) {
+    needsUpdate = true
   }
 
   def getTag(stack: ItemStack): NBTTagCompound =
@@ -95,6 +109,8 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
 
       if (itemstack1.stackSize == 0) {
         slot.putStack(null)
+        //Otherwise crafting slot wasn't eating crafting components
+        slot.onPickupFromSlot(player, itemstack)
       } else {
         slot.onSlotChanged()
       }

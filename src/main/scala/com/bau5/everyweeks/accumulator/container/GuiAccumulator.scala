@@ -2,6 +2,7 @@ package com.bau5.everyweeks.accumulator.container
 
 import net.minecraft.client.gui.inventory.GuiContainer
 import net.minecraft.client.renderer.GlStateManager
+import net.minecraft.client.resources.I18n
 import net.minecraft.util.ResourceLocation
 
 /**
@@ -11,8 +12,9 @@ class GuiAccumulator(container: ContainerAccumulator) extends GuiContainer(conta
 
   private val texture = new ResourceLocation("textures/gui/container/crafting_table.png")
 
-  override def drawGuiContainerForegroundLayer(mouseX: Int, mouseY: Int) {
-    super.drawGuiContainerForegroundLayer(mouseX, mouseY)
+  override def drawGuiContainerForegroundLayer(mouseX: Int, mouseY: Int): Unit = {
+    this.fontRendererObj.drawString("Accumulator", 8, 6, 4210752)
+    this.fontRendererObj.drawString(I18n.format("container.inventory", new Array[AnyRef](0)), 8, this.ySize - 96 + 2, 4210752)
   }
 
   override def drawGuiContainerBackgroundLayer(partialTicks: Float, mouseX: Int, mouseY: Int): Unit = {
