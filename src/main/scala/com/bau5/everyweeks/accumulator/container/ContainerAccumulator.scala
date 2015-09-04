@@ -86,6 +86,17 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
       stack.getTagCompound
     }
 
+
+  override def onContainerClosed(playerIn: EntityPlayer): Unit = {
+    super.onContainerClosed(playerIn)
+    if(craftResult.getStackInSlot(0) == null && !playerIn.worldObj.isRemote) {
+      InventoryHelper.dropInventoryItems(playerIn.worldObj, playerIn.getPosition, crafting)
+      for(i <- 0 until crafting.getSizeInventory) crafting.setInventorySlotContents(i, null)
+      onCraftMatrixChanged(null)
+      onItemStackUpdate()
+    }
+  }
+
   override def canInteractWith(playerIn: EntityPlayer) = true
 
   override def transferStackInSlot(playerIn: EntityPlayer, index: Int): ItemStack = {
