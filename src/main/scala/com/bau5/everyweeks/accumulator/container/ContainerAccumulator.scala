@@ -15,6 +15,8 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
   val crafting = new InventoryCrafting(this, 3, 3)
   val craftResult = new InventoryCraftResult
 
+  loadInventoryFromNBT(tag)
+
   var needsUpdate = true
 
   forSlots(3, 9, 9, 8, 84, 9) { (index, x, y) =>
@@ -26,9 +28,6 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
   }
 
   forSlots(3, 3, 3, 30, 17, 0) { (index, x, y) =>
-    if (tag.hasKey(s"$index")) {
-      crafting.setInventorySlotContents(index, ItemStack.loadItemStackFromNBT(tag.getTag(s"$index").asInstanceOf[NBTTagCompound]))
-    }
     new Slot(crafting, index, x, y)
   }
 
@@ -73,6 +72,14 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
       }
       player.getHeldItem.setTagCompound(tag)
       needsUpdate = false
+    }
+  }
+
+  def loadInventoryFromNBT(tag: NBTTagCompound) {
+    for(index <- 0 until 9) {
+      if (tag.hasKey(s"$index")) {
+        crafting.setInventorySlotContents(index, ItemStack.loadItemStackFromNBT(tag.getTag(s"$index").asInstanceOf[NBTTagCompound]))
+      }
     }
   }
 

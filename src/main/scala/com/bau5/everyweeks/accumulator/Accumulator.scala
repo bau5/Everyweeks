@@ -1,5 +1,6 @@
 package com.bau5.everyweeks.accumulator
 
+import com.bau5.everyweeks.accumulator.container.ContainerAccumulator
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraftforge.common.MinecraftForge
@@ -34,17 +35,11 @@ object Accumulator {
   def init(ev: FMLInitializationEvent) {
     GameRegistry.registerItem(pocketAccumulator, "pocket_accumulator")
     MinecraftForge.EVENT_BUS.register(new ItemPickupHandler())
-  }
-
-  @EventHandler
-  def postInit(ev: FMLPostInitializationEvent) {
     NetworkRegistry.INSTANCE.registerGuiHandler(Accumulator.instance, Accumulator.proxy)
   }
 }
 
-
 class ItemPickupHandler {
-
   @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
   def onEvent(ev: EntityItemPickupEvent) = ev.isCanceled match {
     case false =>
@@ -71,6 +66,16 @@ class ItemPickupHandler {
             val existing = stacks.map(_._2.stackSize).sum
             val newTotal = existing + addToInv.stackSize
             val summedLeftOver = newTotal % numMatches
+
+            println(
+              s"""
+                |Add to: ${addToInv.stackSize}
+                |Existing: $existing
+                |New Total: $newTotal
+                |Left Over: $summedLeftOver
+              """.stripMargin
+            )
+
             matching foreach (_._2.stackSize = newTotal / numMatches)
             for (i <- 0 until summedLeftOver) matching(i)._2.stackSize += 1
 
@@ -90,7 +95,16 @@ class ItemPickupHandler {
               tag.setTag(s"$idx", stack.writeToNBT(new NBTTagCompound))
             }
             acc.setTagCompound(tag)
-            done = true
+
+            ev.entityPlayer.openContainer match {
+              case cont: ContainerAccumulator =>
+                cont.loadInventoryFromNBT(tag)
+                cont.needsUpdate = true
+                cont.onItemStackUpdate()
+              case _ => ;
+            }
+
+            done = leftOver == 0
           }
         }
       }
