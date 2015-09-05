@@ -6,9 +6,8 @@ import net.minecraft.nbt.NBTTagCompound
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent
 import net.minecraftforge.fml.common.Mod.EventHandler
-import net.minecraftforge.fml.common.event.{FMLInitializationEvent, FMLPostInitializationEvent}
+import net.minecraftforge.fml.common.event.FMLInitializationEvent
 import net.minecraftforge.fml.common.eventhandler.{EventPriority, SubscribeEvent}
-import net.minecraftforge.fml.common.gameevent.PlayerEvent.ItemPickupEvent
 import net.minecraftforge.fml.common.network.NetworkRegistry
 import net.minecraftforge.fml.common.registry.GameRegistry
 import net.minecraftforge.fml.common.{Mod, SidedProxy}
@@ -52,7 +51,7 @@ class ItemPickupHandler {
         val use = accumulators.filter(_.hasTagCompound)
         var done = false
         // for each accumulator do...
-        for (acc <- use if !done) {
+        for (acc <- use if !done && !acc.getTagCompound.getBoolean("disabled")) {
           val tag = acc.getTagCompound
           // load stacks from tag and find matching ones
           val stackTags = for (i <- 0 until 9) yield (i, Option(tag.getTag(s"$i")))

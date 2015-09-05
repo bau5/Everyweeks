@@ -5,6 +5,7 @@ import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.Entity
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.world.World
 
 /**
@@ -28,8 +29,16 @@ class ItemPocketAccumulator() extends Item {
   }
 
   override def onItemRightClick(itemStackIn: ItemStack, worldIn: World, playerIn: EntityPlayer): ItemStack = {
-    if (!worldIn.isRemote) {
-      playerIn.openGui(Accumulator.instance, 0, worldIn, 0, 0, 0)
+    playerIn.isSneaking match {
+      case true =>
+        val tag = Option(itemStackIn.getTagCompound).getOrElse(new NBTTagCompound)
+        val boo = tag.getBoolean("disabled")
+        tag.setBoolean("disabled", !boo)
+        println(s"Disabled? $boo")
+      case false =>
+        if (!worldIn.isRemote) {
+          playerIn.openGui(Accumulator.instance, 0, worldIn, 0, 0, 0)
+        }
     }
 
     super.onItemRightClick(itemStackIn, worldIn, playerIn)
