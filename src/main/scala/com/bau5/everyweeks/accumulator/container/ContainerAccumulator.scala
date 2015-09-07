@@ -63,15 +63,28 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
 
   def onItemStackUpdate() {
     if (needsUpdate) {
-      craftResult.setInventorySlotContents(0, CraftingManager.getInstance().findMatchingRecipe(crafting, player.worldObj))
-
-      val tag = new NBTTagCompound
-      for (idx <- 0 until crafting.getSizeInventory) {
-        Option(crafting.getStackInSlot(idx)).foreach {
-          s => tag.setTag(s"$idx", s.writeToNBT(new NBTTagCompound))
-        }
+      val stacks = {
+        for (i <- 0 until crafting.getSizeInventory) yield Option(crafting.getStackInSlot(i))
+      }.filter(_.isDefined).map { opt =>
+        val s = opt.get.copy()
+        s.stackSize = 1
+        s
       }
-      player.getHeldItem.setTagCompound(tag)
+      stacks.headOption match {
+        case Some(s) if stacks.size > 1 =>
+          if (stacks.forall(_.isItemEqual(s))) {
+            craftResult.setInventorySlotContents(0, CraftingManager.getInstance().findMatchingRecipe(crafting, player.worldObj))
+
+            val tag = new NBTTagCompound
+            for (idx <- 0 until crafting.getSizeInventory) {
+              Option(crafting.getStackInSlot(idx)).foreach {
+                s => tag.setTag(s"$idx", s.writeToNBT(new NBTTagCompound))
+              }
+            }
+            player.getHeldItem.setTagCompound(tag)
+          }
+        case _ => ;
+      }
       needsUpdate = false
     }
   }
@@ -97,7 +110,9 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
 
   override def onContainerClosed(playerIn: EntityPlayer): Unit = {
     super.onContainerClosed(playerIn)
-    playerIn.getHeldItem.setItemDamage(damage)
+
+    val acc = playerIn.getHeldItem
+    acc.setItemDamage(damage)
 
     if (playerIn.worldObj.isRemote && damage == 1) {
       playerIn.playSound("accumulator:rope", 0.5F, 1.0F)
@@ -105,11 +120,16 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
 
     if (craftResult.getStackInSlot(0) == null && !playerIn.worldObj.isRemote) {
       InventoryHelper.dropInventoryItems(playerIn.worldObj, playerIn.getPosition, crafting)
-      for (i <- 0 until crafting.getSizeInventory) crafting.setInventorySlotContents(i, null)
-      onCraftMatrixChanged(null)
-      onItemStackUpdate()
-      if (playerIn.getHeldItem.getTagCompound.hasKey("result")) {
-        playerIn.getHeldItem.getTagCompound.removeTag("result")
+      for (i <- 0 until crafting.getSizeInventory) {
+        crafting.setInventorySlotContents(i, null)
+        
+        if (acc.getTagCompound.hasKey(s"$i")) {
+          acc.getTagCompound.removeTag(s"$i")
+        }
+      }
+
+      if (acc.getTagCompound.hasKey("result")) {
+        acc.getTagCompound.removeTag("result")
       }
     } else if (craftResult.getStackInSlot(0) != null) {
       val stack = playerIn.getHeldItem
