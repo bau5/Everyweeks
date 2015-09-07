@@ -10,7 +10,7 @@ import net.minecraft.nbt.NBTTagCompound
 /**
  * Created by bau5 on 9/2/2015.
  */
-class ContainerAccumulator(player: EntityPlayer) extends Container {
+class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container {
   val tag = getTag(player.getHeldItem)
   val crafting = new InventoryCrafting(this, 3, 3)
   val craftResult = new InventoryCraftResult
@@ -36,7 +36,7 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
   override def slotClick(slotId: Int, clickedButton: Int, mode: Int, playerIn: EntityPlayer): ItemStack = {
     if (slotId < inventorySlots.size() && slotId >= 0) {
       Option(inventorySlots.get(slotId).asInstanceOf[Slot].getStack) match {
-        case Some(s) if s.getItem.equals(Accumulator.pocketAccumulator) => return null
+        case Some(s) if s.getItem.equals(Accumulator.accumulator) => return null
         case _ => ;
       }
 
@@ -96,6 +96,12 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
 
   override def onContainerClosed(playerIn: EntityPlayer): Unit = {
     super.onContainerClosed(playerIn)
+    playerIn.getHeldItem.setItemDamage(damage)
+
+    if(!playerIn.worldObj.isRemote && damage == 1) {
+      playerIn.playSound("accumulator:rope", 0.5F, 1.0F)
+    }
+
     if(craftResult.getStackInSlot(0) == null && !playerIn.worldObj.isRemote) {
       InventoryHelper.dropInventoryItems(playerIn.worldObj, playerIn.getPosition, crafting)
       for(i <- 0 until crafting.getSizeInventory) crafting.setInventorySlotContents(i, null)
@@ -111,7 +117,7 @@ class ContainerAccumulator(player: EntityPlayer) extends Container {
     val slot = this.inventorySlots.get(index).asInstanceOf[Slot]
 
     if (slot != null && slot.getHasStack) {
-      if (slot.getStack.getItem.eq(Accumulator.pocketAccumulator)) {
+      if (slot.getStack.getItem.eq(Accumulator.accumulator)) {
         return null
       }
       val itemstack1 = slot.getStack

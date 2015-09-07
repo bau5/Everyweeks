@@ -28,11 +28,11 @@ object Accumulator {
   )
   var proxy: CommonProxy = _
 
-  val pocketAccumulator = new ItemPocketAccumulator()
+  val accumulator = new ItemAccumulator()
 
   @EventHandler
   def init(ev: FMLInitializationEvent) {
-    GameRegistry.registerItem(pocketAccumulator, "accumulator")
+    GameRegistry.registerItem(accumulator, "accumulator")
     MinecraftForge.EVENT_BUS.register(new ItemPickupHandler())
     NetworkRegistry.INSTANCE.registerGuiHandler(Accumulator.instance, Accumulator.proxy)
     proxy.registerRenderingInformation()
@@ -45,10 +45,10 @@ class ItemPickupHandler {
     case false =>
       // the item to be added
       val addToInv = ev.item.getEntityItem
-      if (ev.entityPlayer.inventory.hasItem(Accumulator.pocketAccumulator)) { //if env is full, event repeats
+      if (ev.entityPlayer.inventory.hasItem(Accumulator.accumulator)) { //if env is full, event repeats
         // get player's inventory and find accumulators
         val playerStacks = for (i <- 0 until ev.entityPlayer.inventory.getSizeInventory) yield ev.entityPlayer.inventory.getStackInSlot(i)
-        val accumulators = playerStacks.filter(e => e != null && e.getItem.equals(Accumulator.pocketAccumulator))
+        val accumulators = playerStacks.filter(e => e != null && e.getItem.equals(Accumulator.accumulator))
         val use = accumulators.filter(_.hasTagCompound)
         var done = false
         // for each accumulator do...
@@ -66,15 +66,6 @@ class ItemPickupHandler {
             val existing = stacks.map(_._2.stackSize).sum
             val newTotal = existing + addToInv.stackSize
             val summedLeftOver = newTotal % numMatches
-
-            println(
-              s"""
-                |Add to: ${addToInv.stackSize}
-                |Existing: $existing
-                |New Total: $newTotal
-                |Left Over: $summedLeftOver
-              """.stripMargin
-            )
 
             matching foreach (_._2.stackSize = newTotal / numMatches)
             for (i <- 0 until summedLeftOver) matching(i)._2.stackSize += 1

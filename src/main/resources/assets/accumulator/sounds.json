@@ -1,0 +1,10 @@
+{
+  "rustle": {
+    "category": "player",
+    "sounds": ["rustle_1", "rustle_2"]
+  },
+  "rope": {
+    "category": "player",
+    "sounds": ["rope"]
+  }
+}
