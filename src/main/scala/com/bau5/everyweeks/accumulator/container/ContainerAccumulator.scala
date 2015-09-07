@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack
 import net.minecraft.item.crafting.CraftingManager
 import net.minecraft.nbt.NBTTagCompound
 
+
 /**
  * Created by bau5 on 9/2/2015.
  */
@@ -76,7 +77,7 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
   }
 
   def loadInventoryFromNBT(tag: NBTTagCompound) {
-    for(index <- 0 until 9) {
+    for (index <- 0 until 9) {
       if (tag.hasKey(s"$index")) {
         crafting.setInventorySlotContents(index, ItemStack.loadItemStackFromNBT(tag.getTag(s"$index").asInstanceOf[NBTTagCompound]))
       }
@@ -98,13 +99,13 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
     super.onContainerClosed(playerIn)
     playerIn.getHeldItem.setItemDamage(damage)
 
-    if(playerIn.worldObj.isRemote && damage == 1) {
+    if (playerIn.worldObj.isRemote && damage == 1) {
       playerIn.playSound("accumulator:rope", 0.5F, 1.0F)
     }
 
-    if(craftResult.getStackInSlot(0) == null && !playerIn.worldObj.isRemote) {
+    if (craftResult.getStackInSlot(0) == null && !playerIn.worldObj.isRemote) {
       InventoryHelper.dropInventoryItems(playerIn.worldObj, playerIn.getPosition, crafting)
-      for(i <- 0 until crafting.getSizeInventory) crafting.setInventorySlotContents(i, null)
+      for (i <- 0 until crafting.getSizeInventory) crafting.setInventorySlotContents(i, null)
       onCraftMatrixChanged(null)
       onItemStackUpdate()
     }

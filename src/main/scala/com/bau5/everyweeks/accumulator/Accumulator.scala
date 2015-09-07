@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.network.NetworkRegistry
 import net.minecraftforge.fml.common.registry.GameRegistry
 import net.minecraftforge.fml.common.{Mod, SidedProxy}
 
+
 @Mod(modid = Accumulator.MOD_ID, name = Accumulator.NAME,
   version = Accumulator.VERSION, modLanguage = "scala")
 object Accumulator {
@@ -45,7 +46,8 @@ class ItemPickupHandler {
     case false =>
       // the item to be added
       val addToInv = ev.item.getEntityItem
-      if (ev.entityPlayer.inventory.hasItem(Accumulator.accumulator)) { //if env is full, event repeats
+      if (ev.entityPlayer.inventory.hasItem(Accumulator.accumulator)) {
+        //if env is full, event repeats
         // get player's inventory and find accumulators
         val playerStacks = for (i <- 0 until ev.entityPlayer.inventory.getSizeInventory) yield ev.entityPlayer.inventory.getStackInSlot(i)
         val accumulators = playerStacks.filter(e => e != null && e.getItem.equals(Accumulator.accumulator))
@@ -72,7 +74,7 @@ class ItemPickupHandler {
 
             // collect any items that exceeded max stack size, will be added by vanilla code
             var leftOver = 0
-            matching foreach { case(idx, stack) =>
+            matching foreach { case (idx, stack) =>
               val extra = stack.stackSize - stack.getMaxStackSize
               if (extra > 0) {
                 stack.stackSize = stack.getMaxStackSize
@@ -82,7 +84,7 @@ class ItemPickupHandler {
             ev.item.getEntityItem.stackSize = leftOver
 
             // save to nbt
-            matching foreach { case(idx, stack) =>
+            matching foreach { case (idx, stack) =>
               tag.setTag(s"$idx", stack.writeToNBT(new NBTTagCompound))
             }
             acc.setTagCompound(tag)
