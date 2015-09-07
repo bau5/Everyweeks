@@ -108,6 +108,14 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
       for (i <- 0 until crafting.getSizeInventory) crafting.setInventorySlotContents(i, null)
       onCraftMatrixChanged(null)
       onItemStackUpdate()
+      if (playerIn.getHeldItem.getTagCompound.hasKey("result")) {
+        playerIn.getHeldItem.getTagCompound.removeTag("result")
+      }
+    } else if (craftResult.getStackInSlot(0) != null) {
+      val stack = playerIn.getHeldItem
+      val tag = Option(stack.getTagCompound).getOrElse(new NBTTagCompound)
+      tag.setTag("result", craftResult.getStackInSlot(0).writeToNBT(new NBTTagCompound))
+      stack.setTagCompound(tag)
     }
   }
 

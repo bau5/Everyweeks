@@ -1,12 +1,16 @@
 package com.bau5.everyweeks.accumulator
 
+import java.util
+
 import com.bau5.everyweeks.accumulator.container.ContainerAccumulator
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.entity.Entity
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.{Item, ItemStack}
+import net.minecraft.nbt.{NBTTagCompound, NBTTagByte}
+import net.minecraft.util.EnumChatFormatting
 import net.minecraft.world.World
-
+import scala.collection.JavaConverters._
 
 /**
  * Created by bau5 on 9/2/2015.
@@ -27,6 +31,19 @@ class ItemAccumulator() extends Item {
       case _ => ;
     }
     super.onUpdate(stack, worldIn, entityIn, itemSlot, isSelected)
+  }
+
+
+  override def addInformation(stack: ItemStack, playerIn: EntityPlayer, tooltip: util.List[_], advanced: Boolean) {
+    if (stack.hasTagCompound) {
+      Option(stack.getTagCompound.getTag("result")) match {
+        case Some(s) =>
+          val result = ItemStack.loadItemStackFromNBT(s.asInstanceOf[NBTTagCompound])
+          tooltip.asInstanceOf[util.List[Any]].add(result.getDisplayName)
+        case None => ;
+      }
+    }
+    super.addInformation(stack, playerIn, tooltip, advanced)
   }
 
   override def onItemRightClick(itemStackIn: ItemStack, worldIn: World, playerIn: EntityPlayer): ItemStack = {
