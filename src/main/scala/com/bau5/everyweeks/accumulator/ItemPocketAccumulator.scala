@@ -13,8 +13,9 @@ import net.minecraft.world.World
  */
 class ItemPocketAccumulator() extends Item {
   this.setMaxStackSize(1)
-  this.setUnlocalizedName("pocket_accumulator")
+  this.setMaxDamage(1)
   this.setCreativeTab(CreativeTabs.tabMisc)
+  this.setUnlocalizedName("accumulator")
 
   override def onUpdate(stack: ItemStack, worldIn: World, entityIn: Entity, itemSlot: Int, isSelected: Boolean) {
     entityIn match {
@@ -31,15 +32,15 @@ class ItemPocketAccumulator() extends Item {
   override def onItemRightClick(itemStackIn: ItemStack, worldIn: World, playerIn: EntityPlayer): ItemStack = {
     playerIn.isSneaking match {
       case true =>
-        val tag = Option(itemStackIn.getTagCompound).getOrElse(new NBTTagCompound)
-        val boo = tag.getBoolean("disabled")
-        tag.setBoolean("disabled", !boo)
-        println(s"Disabled? $boo")
+        val damage = if (itemStackIn.getItemDamage == 1) 0 else 1
+        playerIn.getHeldItem.setItemDamage(damage)
       case false =>
         if (!worldIn.isRemote) {
           playerIn.openGui(Accumulator.instance, 0, worldIn, 0, 0, 0)
         }
     }
+
+    println(playerIn.getHeldItem.getItemDamage)
 
     super.onItemRightClick(itemStackIn, worldIn, playerIn)
   }

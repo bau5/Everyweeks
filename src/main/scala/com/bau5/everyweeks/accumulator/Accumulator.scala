@@ -32,9 +32,10 @@ object Accumulator {
 
   @EventHandler
   def init(ev: FMLInitializationEvent) {
-    GameRegistry.registerItem(pocketAccumulator, "pocket_accumulator")
+    GameRegistry.registerItem(pocketAccumulator, "accumulator")
     MinecraftForge.EVENT_BUS.register(new ItemPickupHandler())
     NetworkRegistry.INSTANCE.registerGuiHandler(Accumulator.instance, Accumulator.proxy)
+    proxy.registerRenderingInformation()
   }
 }
 
@@ -51,7 +52,7 @@ class ItemPickupHandler {
         val use = accumulators.filter(_.hasTagCompound)
         var done = false
         // for each accumulator do...
-        for (acc <- use if !done && !acc.getTagCompound.getBoolean("disabled")) {
+        for (acc <- use if !done && acc.getItemDamage == 0) {
           val tag = acc.getTagCompound
           // load stacks from tag and find matching ones
           val stackTags = for (i <- 0 until 9) yield (i, Option(tag.getTag(s"$i")))
@@ -61,7 +62,7 @@ class ItemPickupHandler {
 
           val numMatches = matching.size
           if (numMatches > 0) {
-            // compute the new stack size, we distribute the items evenly across all occurences in the inv
+            // compute the new stack size, we distribute the items evenly across all occurrences in the inv
             val existing = stacks.map(_._2.stackSize).sum
             val newTotal = existing + addToInv.stackSize
             val summedLeftOver = newTotal % numMatches
