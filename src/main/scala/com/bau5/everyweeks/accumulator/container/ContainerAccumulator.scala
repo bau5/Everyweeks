@@ -98,7 +98,7 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
     super.onContainerClosed(playerIn)
     playerIn.getHeldItem.setItemDamage(damage)
 
-    if(!playerIn.worldObj.isRemote && damage == 1) {
+    if(playerIn.worldObj.isRemote && damage == 1) {
       playerIn.playSound("accumulator:rope", 0.5F, 1.0F)
     }
 
