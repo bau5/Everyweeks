@@ -1,6 +1,7 @@
 package com.bau5.everyweeks.accumulator.container
 
 import com.bau5.everyweeks.accumulator.Accumulator
+import com.bau5.lib.FunctionalInventory._
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory._
 import net.minecraft.item.ItemStack
@@ -13,7 +14,11 @@ import net.minecraft.nbt.NBTTagCompound
  */
 class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container {
   val tag = getTag(player.getHeldItem)
-  val crafting = new InventoryCrafting(this, 3, 3)
+  val crafting = new InventoryCrafting(this, 3, 3) {
+    override def markDirty(): Unit = {
+      onCraftMatrixChanged(this)
+    }
+  }
   val craftResult = new InventoryCraftResult
 
   loadInventoryFromNBT(tag)
@@ -36,18 +41,21 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
 
   override def slotClick(slotId: Int, clickedButton: Int, mode: Int, playerIn: EntityPlayer): ItemStack = {
     if (slotId < inventorySlots.size() && slotId >= 0) {
-      Option(inventorySlots.get(slotId).asInstanceOf[Slot].getStack) match {
-        case Some(s) if s.getItem.equals(Accumulator.accumulator) => return null
+      Option(inventorySlots.get(slotId)) match {
+        case Some(o) if o.isInstanceOf[Slot] =>
+          val s = o.asInstanceOf[Slot]
+          if (Option(s.getStack).exists(_.getItem.equals(Accumulator.accumulator))) {
+            return null
+          }
         case _ => ;
-      }
-
-      if (slotId == 45) {
-        onCraftMatrixChanged(crafting)
       }
     }
 
-    val stack = super.slotClick(slotId, clickedButton, mode, playerIn)
-    stack
+    if (slotId == 45) {
+      onCraftMatrixChanged(crafting)
+    }
+
+    super.slotClick(slotId, clickedButton, mode, playerIn)
   }
 
   private def forSlots(rows: Int, cols: Int, rowLength: Int, xOff: Int, yOff: Int, indexOff: Int)(func: (Int, Int, Int) => Slot) {
@@ -63,23 +71,18 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
 
   def onItemStackUpdate() {
     if (needsUpdate) {
-      val stacks = {
-        for (i <- 0 until crafting.getSizeInventory) yield Option(crafting.getStackInSlot(i))
-      }.filter(_.isDefined).map { opt =>
-        val s = opt.get.copy()
-        s.stackSize = 1
-        s
-      }
+      val stacks = crafting.getStacks()
+
       stacks.headOption match {
         case Some(s) if stacks.size > 1 =>
           if (stacks.forall(_.isItemEqual(s))) {
-            craftResult.setInventorySlotContents(0, CraftingManager.getInstance().findMatchingRecipe(crafting, player.worldObj))
+            craftResult.setInventorySlotContents(0,
+              CraftingManager.getInstance().findMatchingRecipe(crafting, player.worldObj))
 
             val tag = new NBTTagCompound
-            for (idx <- 0 until crafting.getSizeInventory) {
-              Option(crafting.getStackInSlot(idx)).foreach {
-                s => tag.setTag(s"$idx", s.writeToNBT(new NBTTagCompound))
-              }
+            val posStacks = crafting.getPositionedStacks()
+            posStacks.foreach { pos =>
+              tag.setTag(s"${pos.idx}", pos.stack.writeToNBT(new NBTTagCompound))
             }
             player.getHeldItem.setTagCompound(tag)
           }
@@ -122,7 +125,7 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
       InventoryHelper.dropInventoryItems(playerIn.worldObj, playerIn.getPosition, crafting)
       for (i <- 0 until crafting.getSizeInventory) {
         crafting.setInventorySlotContents(i, null)
-        
+
         if (acc.getTagCompound.hasKey(s"$i")) {
           acc.getTagCompound.removeTag(s"$i")
         }
