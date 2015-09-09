@@ -12,6 +12,7 @@ import net.minecraft.util.EnumChatFormatting
 import net.minecraft.world.World
 import scala.collection.JavaConverters._
 
+
 /**
  * Created by bau5 on 9/2/2015.
  */
@@ -26,7 +27,7 @@ class ItemAccumulator() extends Item {
       case player: EntityPlayer =>
         player.openContainer match {
           case acc: ContainerAccumulator => acc.onItemStackUpdate()
-          case _ => ;
+          case _ => if (stack.getItemDamage == 2) { stack.setItemDamage(1) }
         }
       case _ => ;
     }

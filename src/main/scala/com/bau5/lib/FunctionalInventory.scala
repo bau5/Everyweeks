@@ -27,6 +27,14 @@ class FunctionalInventory (inv: Inventory) extends Iterable[PositionedStack] {
     }
   }
 
+  /**
+   * This function will modify the inventory's contents by executing func and applying the
+   * result to the original index in the inventory. Lists returned from here will not
+   * exclude null stacks, unlike getPositionedStacks and getStacks
+   *
+   * @param func
+   * @return
+   */
   def mapInventory(func: PositionedStack => PositionedStack): List[PositionedStack] = {
     getPositionedStacks().map { pos =>
       val ret = func(pos)
@@ -40,16 +48,22 @@ class FunctionalInventory (inv: Inventory) extends Iterable[PositionedStack] {
     case false => getStacks().exists(_.isItemEqual(find))
   }
 
+  def isDefined(idx: Int): Boolean = inv.getStackInSlot(idx) != null
+
   /**
    * Gets all stacks from the inventory <b>that are NOT null</b>
    * @return non-null Positioned stacks
    */
-  def getPositionedStacks(): List[PositionedStack] = iterator.toList.filter(_.stack != null)
+  def getPositionedStacks(): List[PositionedStack] = getAllPositionedStacks().filter(_.stack != null)
   /**
    * Gets all stacks from the inventory <b>that are NOT null</b>
    * @return non-null stacks
    */
-  def getStacks(): List[ItemStack] = iterator.map(_.stack).toList.filter(_ != null)
+  def getStacks(): List[ItemStack] = getAllStacks().filter(_ != null)
+
+  def getAllStacks(): List[ItemStack] = getAllPositionedStacks().map(_.stack)
+
+  def getAllPositionedStacks(): List[PositionedStack] = iterator.toList
 }
 
 object PositionedStack {

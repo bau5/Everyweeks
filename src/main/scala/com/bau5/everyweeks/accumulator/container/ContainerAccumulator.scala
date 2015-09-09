@@ -111,7 +111,6 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
       stack.getTagCompound
     }
 
-
   override def onContainerClosed(playerIn: EntityPlayer): Unit = {
     super.onContainerClosed(playerIn)
 
@@ -136,7 +135,7 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
       if (acc.getTagCompound.hasKey("result")) {
         acc.getTagCompound.removeTag("result")
       }
-    } else if (craftResult.getStackInSlot(0) != null) {
+    } else if (craftResult.isDefined(0)) {
       val stack = playerIn.getHeldItem
       val tag = Option(stack.getTagCompound).getOrElse(new NBTTagCompound)
       craftResult.mapInventory { pos =>
