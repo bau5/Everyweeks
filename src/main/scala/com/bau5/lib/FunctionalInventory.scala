@@ -27,6 +27,14 @@ class FunctionalInventory (inv: Inventory) extends Iterable[PositionedStack] {
     }
   }
 
+  def mapInventory(func: PositionedStack => PositionedStack): List[PositionedStack] = {
+    getPositionedStacks().map { pos =>
+      val ret = func(pos)
+      inv.setInventorySlotContents(ret.idx, ret.stack)
+      ret
+    }
+  }
+
   def hasItemStack(find: ItemStack, strict: Boolean = false): Boolean = strict match {
     case true => getStacks().exists(_.getIsItemStackEqual(find))
     case false => getStacks().exists(_.isItemEqual(find))
@@ -48,4 +56,6 @@ object PositionedStack {
   def apply(tup: (Int, ItemStack)): PositionedStack = new PositionedStack(tup._1, tup._2)
 }
 
-case class PositionedStack(idx: Int, stack: ItemStack)
+case class PositionedStack(idx: Int, stack: ItemStack) {
+  lazy val nulled = new PositionedStack(idx, null)
+}

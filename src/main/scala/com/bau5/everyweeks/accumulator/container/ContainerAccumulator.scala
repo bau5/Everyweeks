@@ -2,6 +2,7 @@ package com.bau5.everyweeks.accumulator.container
 
 import com.bau5.everyweeks.accumulator.Accumulator
 import com.bau5.lib.FunctionalInventory._
+import com.bau5.lib.PositionedStack
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory._
 import net.minecraft.item.ItemStack
@@ -123,12 +124,13 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
 
     if (craftResult.getStackInSlot(0) == null && !playerIn.worldObj.isRemote) {
       InventoryHelper.dropInventoryItems(playerIn.worldObj, playerIn.getPosition, crafting)
-      for (i <- 0 until crafting.getSizeInventory) {
-        crafting.setInventorySlotContents(i, null)
 
+      crafting.mapInventory { pos =>
+        val i = pos.idx
         if (acc.getTagCompound.hasKey(s"$i")) {
           acc.getTagCompound.removeTag(s"$i")
         }
+        pos.nulled
       }
 
       if (acc.getTagCompound.hasKey("result")) {
@@ -137,8 +139,11 @@ class ContainerAccumulator(player: EntityPlayer, damage: Int) extends Container 
     } else if (craftResult.getStackInSlot(0) != null) {
       val stack = playerIn.getHeldItem
       val tag = Option(stack.getTagCompound).getOrElse(new NBTTagCompound)
-      tag.setTag("result", craftResult.getStackInSlot(0).writeToNBT(new NBTTagCompound))
-      stack.setTagCompound(tag)
+      craftResult.mapInventory { pos =>
+        tag.setTag("result", pos.stack.writeToNBT(new NBTTagCompound))
+        stack.setTagCompound(tag)
+        pos.nulled
+      }
     }
   }
 
