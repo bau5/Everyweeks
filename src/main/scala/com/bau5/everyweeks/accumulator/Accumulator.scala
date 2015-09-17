@@ -1,6 +1,7 @@
 package com.bau5.everyweeks.accumulator
 
 import com.bau5.everyweeks.accumulator.container.ContainerAccumulator
+import com.bau5.lib.ProxyBase
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraftforge.common.MinecraftForge
@@ -27,7 +28,7 @@ object Accumulator {
     serverSide = "com.bau5.everyweeks.accumulator.CommonProxy",
     clientSide = "com.bau5.everyweeks.accumulator.ClientProxy"
   )
-  var proxy: CommonProxy = _
+  var proxy: ProxyBase = _
 
   val accumulator = new ItemAccumulator()
 
