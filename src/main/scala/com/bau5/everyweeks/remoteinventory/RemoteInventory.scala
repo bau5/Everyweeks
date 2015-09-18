@@ -1,8 +1,10 @@
 package com.bau5.everyweeks.remoteinventory
 
-import net.minecraftforge.fml.common.Mod
+import com.bau5.everyweeks.accumulator.Accumulator
+import net.minecraftforge.fml.common.{SidedProxy, Mod}
 import net.minecraftforge.fml.common.Mod.EventHandler
 import net.minecraftforge.fml.common.event.FMLInitializationEvent
+import net.minecraftforge.fml.common.network.NetworkRegistry
 import net.minecraftforge.fml.common.registry.GameRegistry
 
 /**
@@ -16,8 +18,18 @@ object RemoteInventory {
 
   val remote = new ItemRemoteInventory
 
+  @Mod.Instance(Accumulator.MOD_ID)
+  var instance = this
+
+  @SidedProxy(
+    serverSide = "com.bau5.everyweeks.remoteinventory.CommonProxy",
+    clientSide = "com.bau5.everyweeks.remoteinventory.ClientProxy"
+  )
+  var proxy: CommonProxy = _
+
   @EventHandler
   def init(ev: FMLInitializationEvent) {
     GameRegistry.registerItem(remote, "remote")
+    NetworkRegistry.INSTANCE.registerGuiHandler(RemoteInventory.instance, proxy)
   }
 }

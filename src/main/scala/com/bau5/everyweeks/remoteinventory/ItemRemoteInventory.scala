@@ -17,6 +17,7 @@ import com.bau5.lib.RichNBTTagCompound._
 class ItemRemoteInventory extends Item {
   this.setMaxStackSize(1)
   this.setCreativeTab(CreativeTabs.tabMisc)
+  this.setUnlocalizedName("remoteinv")
 
   override def onItemUse(stack: ItemStack, playerIn: EntityPlayer, worldIn: World, pos: BlockPos, side: EnumFacing,
      hitX: Float, hitY: Float, hitZ: Float): Boolean = playerIn.isSneaking match {
@@ -46,7 +47,7 @@ class ItemRemoteInventory extends Item {
         println(pos)
         Option(worldObj.getTileEntity(pos)) match {
           case Some(te) if te.isInstanceOf[IInventory] =>
-            playerIn.displayGUIChest(new OpenableInventory(te.asInstanceOf[IInventory]))
+            playerIn.openGui(RemoteInventory.instance, 0, worldIn,te.getPos.getX, te.getPos.getY, te.getPos.getZ)
           case _ => ;
         }
       }
