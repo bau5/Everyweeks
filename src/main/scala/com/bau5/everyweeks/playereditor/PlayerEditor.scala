@@ -1,6 +1,8 @@
 package com.bau5.everyweeks.playereditor
 
 import net.minecraft.command.{WrongUsageException, CommandBase, ICommandSender}
+import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.util.ChatComponentText
 import net.minecraftforge.fml.common.Mod.EventHandler
 import net.minecraftforge.fml.common.event.{FMLServerStartingEvent, FMLInitializationEvent}
 import net.minecraftforge.fml.common.Mod
@@ -30,11 +32,13 @@ class CommandOpenInventory extends CommandBase {
   override def execute(sender: ICommandSender, args: Array[String]) = args.length match {
     case n if n > 1 =>
       val senderPlayer = CommandBase.getCommandSenderAsPlayer(sender)
-      val otherPlayer = CommandBase.func_175768_b(sender, args(1))
+      Option(CommandBase.func_175768_b(sender, args(1))) match {
+        case Some(other) if other.isInstanceOf[EntityPlayer] =>
+          senderPlayer.displayGUIChest(other.asInstanceOf[EntityPlayer].inventory)
+        case _ => sender.addChatMessage(new ChatComponentText("Player not found!"))
+      }
+
       println("Got command! " + args)
-      println(otherPlayer)
     case _ => throw new WrongUsageException(getCommandUsage(sender))
   }
-
-
 }
